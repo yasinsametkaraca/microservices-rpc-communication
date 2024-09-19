@@ -6,7 +6,7 @@ let amqplibConnection = null;
 
 const getChannel = async () => {
     if (amqplibConnection === null) {
-        amqplibConnection = await amqplib.connect("amqp://localhost");
+        amqplibConnection = await amqplib.connect("amqp://guest:guest@localhost:5672");
     }
 
     return await amqplibConnection.createChannel();
@@ -19,7 +19,7 @@ const expensiveDBOperation = (payload, fakeResponse) => {
     return new Promise((res, rej) => {
         setTimeout(() => {
             res(fakeResponse);
-        }, 9000);
+        }, 3000);
     });
 };
 
@@ -80,7 +80,7 @@ const requestData = async (RPC_QUEUE_NAME, requestPayload, uuid) => {
                 q.queue,
                 (msg) => {
                     if (msg.properties.correlationId === uuid) {
-                        resolve(JSON.parse(msg.content.toString()));
+                        resolve(JSON.parse(msg.content.toString())); // resolve the response from the queue if the correlationId matches the uuid. Return the response to the caller.
                         clearTimeout(timeout);
                     } else {
                         reject("data Not found!");
