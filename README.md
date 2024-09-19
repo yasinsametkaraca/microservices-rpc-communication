@@ -54,6 +54,35 @@ When using RPC with RabbitMQ, an asynchronous request-response system is created
 - A request-response cycle is established over RabbitMQ queues. The client waits until the response is received and the process is considered complete.
 - **Usage**: Scenarios where the client starts an operation and needs to get the result (e.g., database queries, heavy computations).
 
+### Should the Main Operation (db operations etc.) Be Done in `RPCObserver` or in the Return of `requestData`?
+
+The main operation (such as a database query, computation, or other time-consuming tasks) should be performed in the **`RPCObserver`**. This is because **`RPCObserver`** acts as the server and processes incoming requests, while `requestData` only sends the request and waits for the result.
+
+### 1. The Main Operation is Done in `RPCObserver`:
+- **Role**: `RPCObserver` receives requests and performs the main operation. This could be a long-running or resource-intensive task (such as a database query, file processing, or calling an external API).
+- **How It Works**: When a request is sent to the RabbitMQ queue, `RPCObserver` captures it and processes it. Once the operation is complete, `RPCObserver` sends the result back to `requestData` (the client) through the queue.
+
+### 2. `requestData` Waits for the Result:
+- **Role**: `requestData` is responsible for sending a request and waiting for the response. It listens to a temporary queue and waits for the result of the operation that was processed by `RPCObserver`.
+- **Return Section**: The return part of `requestData` simply provides the result processed by `RPCObserver`. `requestData` does not handle the main operation itself; it just sends the request and returns the result once it receives the response from the server.
+
+### In Summary:
+- **The operation is done in `RPCObserver`**: The server processes the request, such as performing a database query, file operation, or complex computation.
+- **`requestData` waits for the result**: The client uses `requestData` to send the request and wait for the result, but the main operation is handled by `RPCObserver` and the result is returned to `requestData`.
+
+This ensures the correct roles for both the client and server in the asynchronous nature of RPC with RabbitMQ.
+
+## To Understand the Logic of RPC in RabbitMQ (Scenario):
+You can test the RPC pattern with RabbitMQ by following these steps:
+
+http://localhost:8000/customer (Product service is running on 8000 port. We receive the customer service response in the product service.)
+
+`Response: {"_id":"123456","name":"YSK","country":"Turkey"}`
+
+http://localhost:9000/wishlist (Customer service is running on 9000 port. We receive the product service response in the customer service.)
+
+`Response: {"_id":"123456","title":"sample product","price":300}`
+
 ## How to run the project:
 ```
 yarn install
