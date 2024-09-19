@@ -74,7 +74,7 @@ const requestData = async (RPC_QUEUE_NAME, requestPayload, uuid) => {
             // timeout n
             const timeout = setTimeout(() => {
                 channel.close();
-                resolve("API could not fullfil the request!");
+                resolve("API could not fulfill the request!");
             }, 8000);
             channel.consume(
                 q.queue,
